@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gastos del Hogar</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --border: #2e3350;
+  --text: #eef0f8;
+  --text2: #8b90b0;
+  --accent: #6c8fff;
+  --accent2: #4ade80;
+  --danger: #ff6b6b;
+  --ali: #f59e0b;
+  --sum: #38bdf8;
+  --tra: #a78bfa;
+  --oth: #6b7280;
+  --radius: 14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;padding-bottom:100px}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px;position:sticky;top:0;z-index:100}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.app-name{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.app-name span{color:var(--accent)}
+.save-pill{font-size:10px;background:rgba(74,222,128,0.15);color:var(--accent2);padding:4px 10px;border-radius:20px;font-weight:600}
+
+/* PERIOD SELECTOR */
+.period-row{display:flex;gap:8px;align-items:center;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.period-row::-webkit-scrollbar{display:none}
+.period-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap}
+.period-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+.period-custom{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.period-custom input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:8px;font-size:12px;font-family:inherit;outline:none;width:120px}
+
+/* NAV TABS */
+.nav{display:flex;background:var(--surface2);margin:12px 16px 0;border-radius:12px;padding:3px;gap:2px}
+.nav-btn{flex:1;padding:8px;border:none;border-radius:9px;background:transparent;color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+.nav-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,0.3)}
+
+/* CONTENT */
+.content{padding:16px}
+.panel{display:none}
+.panel.active{display:block}
+
+/* TOTALS */
+.totals-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.total-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.total-card.full{grid-column:1/-1}
+.total-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);margin-bottom:4px}
+.total-value{font-size:26px;font-weight:800;letter-spacing:-1px}
+.total-value.accent{color:var(--accent)}
+.total-value.danger{color:var(--danger)}
+
+/* CAT BARS */
+.cat-bar-wrap{margin-top:12px}
+.cat-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cat-name{font-size:12px;color:var(--text2);width:90px;flex-shrink:0}
+.bar-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.cat-amount{font-size:12px;font-weight:700;width:65px;text-align:right;flex-shrink:0}
+
+/* FORM */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.form-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text)}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);padding:10px 12px;border-radius:10px;font-family:inherit;font-size:14px;outline:none;transition:border-color .2s;appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:none;height:60px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-add{width:100%;padding:14px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
+.btn-add:active{transform:scale(.97)}
+
+/* GASTOS LIST */
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.list-title{font-size:14px;font-weight:700}
+.list-count{font-size:11px;color:var(--text2)}
+.gasto-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;cursor:pointer;transition:border-color .15s}
+.gasto-item:active{border-color:var(--accent)}
+.gasto-dot{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.gasto-info{min-width:0}
+.gasto-desc{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gasto-meta{font-size:11px;color:var(--text2);margin-top:2px;display:flex;gap:6px;align-items:center}
+.gasto-cat{padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700}
+.gasto-right{text-align:right;flex-shrink:0}
+.gasto-amount{font-size:16px;font-weight:800;letter-spacing:-0.5px}
+.gasto-pago{font-size:10px;color:var(--text2);margin-top:2px}
+
+/* CAT COLORS */
+.cat-ali{background:rgba(245,158,11,.15);color:#f59e0b}
+.cat-sum{background:rgba(56,189,248,.15);color:#38bdf8}
+.cat-tra{background:rgba(167,139,250,.15);color:#a78bfa}
+.cat-oth{background:rgba(107,114,128,.15);color:#9ca3af}
+.dot-ali{background:#f59e0b}
+.dot-sum{background:#38bdf8}
+.dot-tra{background:#a78bfa}
+.dot-oth{background:#6b7280}
+.fill-ali{background:#f59e0b}
+.fill-sum{background:#38bdf8}
+.fill-tra{background:#a78bfa}
+.fill-oth{background:#6b7280}
+.amount-ali{color:#f59e0b}
+.amount-sum{color:#38bdf8}
+.amount-tra{color:#a78bfa}
+.amount-oth{color:#9ca3af}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:var(--text2)}
+.empty-icon{font-size:3rem;margin-bottom:10px}
+
+/* EDIT OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;backdrop-filter:blur(4px);align-items:flex-end}
+.overlay.open{display:flex}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 16px 40px;width:100%;max-height:90vh;overflow-y:auto;animation:up .25s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:16px;font-weight:700;margin-bottom:16px}
+.sheet-actions{display:flex;gap:8px;margin-top:16px}
+.btn-save{flex:1;padding:13px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.btn-del{padding:13px 16px;background:rgba(255,107,107,.15);color:var(--danger);border:1px solid var(--danger);border-radius:12px;font-size:18px;cursor:pointer}
+.btn-cancel{padding:13px 16px;background:var(--surface2);color:var(--text2);border:none;border-radius:12px;font-family:inherit;font-size:14px;cursor:pointer}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:300;opacity:0;transition:all .3s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:var(--accent2);color:var(--accent2)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="app-name">🏠 <span>Gastos</span> del Hogar</div>
+    <div class="save-pill" id="savePill">💾 Guardado</div>
+  </div>
+  <div class="period-row" id="periodRow">
+    <button class="period-btn" onclick="setPeriod('semana')">Esta semana</button>
+    <button class="period-btn" onclick="setPeriod('mes')">Este mes</button>
+    <button class="period-btn" onclick="setPeriod('trimestre')">Trimestre</button>
+    <button class="period-btn" onclick="setPeriod('año')">Este año</button>
+    <button class="period-btn" onclick="setPeriod('todo')">Todo</button>
+    <div class="period-custom">
+      <input type="date" id="fechaDesde" onchange="setPeriod('custom')">
+      <span style="color:var(--text2);font-size:12px">→</span>
+      <input type="date" id="fechaHasta" onchange="setPeriod('custom')">
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" id="navResumen" onclick="showPanel('resumen')">📊 Resumen</button>
+  <button class="nav-btn" id="navAnadir" onclick="showPanel('anadir')">➕ Añadir</button>
+  <button class="nav-btn" id="navLista" onclick="showPanel('lista')">📋 Gastos</button>
+</div>
+
+<div class="content">
+
+  <!-- RESUMEN -->
+  <div class="panel active" id="panelResumen">
+    <div class="totals-grid" id="totalsGrid"></div>
+    <div class="form-card">
+      <div class="form-title">Por categoría</div>
+      <div class="cat-bar-wrap" id="catBars"></div>
+    </div>
+  </div>
+
+  <!-- AÑADIR -->
+  <div class="panel" id="panelAnadir">
+    <div class="form-card">
+      <div class="form-title">Nuevo gasto</div>
+      <div class="field">
+        <label>Fecha</label>
+        <input type="date" id="nFecha">
+      </div>
+      <div class="field">
+        <label>Descripción</label>
+        <input type="text" id="nDesc" placeholder="Ej: Compra Mercadona">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Categoría</label>
+          <select id="nCat">
+            <option value="ali">🛒 Alimentación</option>
+            <option value="sum">💡 Suministros</option>
+            <option value="tra">🚗 Transporte</option>
+            <option value="oth">📦 Otros</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Importe (€)</label>
+          <input type="number" id="nImporte" placeholder="0.00" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="field">
+        <label>Pagado con</label>
+        <select id="nPago">
+          <option>Tarjeta</option>
+          <option>Efectivo</option>
+          <option>Bizum</option>
+          <option>Transferencia</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notas (opcional)</label>
+        <textarea id="nNotas" placeholder="Detalles adicionales..."></textarea>
+      </div>
+      <button class="btn-add" onclick="addGasto()">➕ Añadir gasto</button>
+    </div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="panel" id="panelLista">
+    <div class="list-header">
+      <div class="list-title">Todos los gastos</div>
+      <div class="list-count" id="listCount"></div>
+    </div>
+    <div id="gastosList"></div>
+  </div>
+
+</div>
+
+<!-- EDIT SHEET -->
+<div class="overlay" id="editOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Editar gasto</div>
+    <div class="field"><label>Fecha</label><input type="date" id="eFecha"></div>
+    <div class="field"><label>Descripción</label><input type="text" id="eDesc"></div>
+    <div class="field-row">
+      <div class="field"><label>Categoría</label>
+        <select id="eCat">
+          <option value="ali">🛒 Alimentación</option>
+          <option value="sum">💡 Suministros</option>
+          <option value="tra">🚗 Transporte</option>
+          <option value="oth">📦 Otros</option>
+        </select>
+      </div>
+      <div class="field"><label>Importe (€)</label><input type="number" id="eImporte" step="0.01" min="0"></div>
+    </div>
+    <div class="field"><label>Pagado con</label>
+      <select id="ePago">
+        <option>Tarjeta</option><option>Efectivo</option><option>Bizum</option><option>Transferencia</option>
+      </select>
+    </div>
+    <div class="field"><label>Notas</label><textarea id="eNotas"></textarea></div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeEdit()">Cancelar</button>
+      <button class="btn-del" onclick="deleteGasto()">🗑</button>
+      <button class="btn-save" onclick="saveEdit()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SK = 'gastos_hogar_v2';
+let gastos = [];
+let editId = null;
+let periodo = 'mes';
+let fechaDesde = null, fechaHasta = null;
+
+const CATS = {
+  ali: {label:'Alimentación', icon:'🛒', cls:'ali'},
+  sum: {label:'Suministros',  icon:'💡', cls:'sum'},
+  tra: {label:'Transporte',   icon:'🚗', cls:'tra'},
+  oth: {label:'Otros',        icon:'📦', cls:'oth'},
+};
+
+function load() {
+  try { gastos = JSON.parse(localStorage.getItem(SK)) || []; } catch(e) { gastos = []; }
+}
+function save() {
+  try {
+    localStorage.setItem(SK, JSON.stringify(gastos));
+    const p = document.getElementById('savePill');
+    p.textContent = '✓ Guardado'; p.style.color = '#4ade80';
+  } catch(e) {}
+}
+
+// Set today as default date
+function setDefaultDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('nFecha').value = today;
+}
+
+function setPeriod(p) {
+  periodo = p;
+  document.querySelectorAll('.period-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['semana','mes','trimestre','año','todo'][i] === p || (p==='custom' && i===4));
+  });
+  if(p !== 'custom') { fechaDesde = null; fechaHasta = null; }
+  else {
+    fechaDesde = document.getElementById('fechaDesde').value;
+    fechaHasta = document.getElementById('fechaHasta').value;
+  }
+  renderAll();
+}
+
+function getFiltered() {
+  const now = new Date();
+  const startOf = (d) => { d.setHours(0,0,0,0); return d; };
+  return gastos.filter(g => {
+    const d = new Date(g.fecha + 'T00:00:00');
+    if(periodo === 'semana') {
+      const start = startOf(new Date(now)); start.setDate(now.getDate() - now.getDay());
+      return d >= start;
+    }
+    if(periodo === 'mes') return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    if(periodo === 'trimestre') {
+      const q = Math.floor(now.getMonth()/3);
+      return Math.floor(d.getMonth()/3)===q && d.getFullYear()===now.getFullYear();
+    }
+    if(periodo === 'año') return d.getFullYear()===now.getFullYear();
+    if(periodo === 'custom') {
+      if(fechaDesde && d < new Date(fechaDesde + 'T00:00:00')) return false;
+      if(fechaHasta && d > new Date(fechaHasta + 'T23:59:59')) return false;
+      return true;
+    }
+    return true;
+  }).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+}
+
+function renderAll() {
+  renderResumen();
+  renderLista();
+}
+
+function renderResumen() {
+  const f = getFiltered();
+  const total = f.reduce((s,g) => s + g.importe, 0);
+  const byCat = {};
+  Object.keys(CATS).forEach(k => byCat[k] = 0);
+  f.forEach(g => { byCat[g.cat] = (byCat[g.cat]||0) + g.importe; });
+
+  // Totals grid
+  const tg = document.getElementById('totalsGrid');
+  tg.innerHTML = `
+    <div class="total-card full">
+      <div class="total-label">Total periodo</div>
+      <div class="total-value danger">${fmt(total)}</div>
+    </div>
+    ${Object.entries(CATS).map(([k,c]) => `
+      <div class="total-card">
+        <div class="total-label">${c.icon} ${c.label}</div>
+        <div class="total-value" style="font-size:20px;color:var(--${k==='ali'?'ali':k==='sum'?'sum':k==='tra'?'tra':'oth'})">${fmt(byCat[k]||0)}</div>
+      </div>
+    `).join('')}
+  `;
+
+  // Cat bars
+  const cb = document.getElementById('catBars');
+  if(total === 0) { cb.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">Sin gastos en este periodo</div>'; return; }
+  cb.innerHTML = Object.entries(CATS).map(([k,c]) => {
+    const pct = total > 0 ? ((byCat[k]||0)/total*100).toFixed(1) : 0;
+    return `<div class="cat-row">
+      <div class="cat-dot dot-${c.cls}"></div>
+      <div class="cat-name">${c.label}</div>
+      <div class="bar-track"><div class="bar-fill fill-${c.cls}" style="width:${pct}%"></div></div>
+      <div class="cat-amount amount-${c.cls}">${fmt(byCat[k]||0)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderLista() {
+  const f = getFiltered();
+  document.getElementById('listCount').textContent = f.length + ' gastos';
+  const el = document.getElementById('gastosList');
+  if(!f.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🧾</div><p>No hay gastos en este periodo</p></div>';
+    return;
+  }
+  el.innerHTML = f.map(g => {
+    const c = CATS[g.cat] || CATS.oth;
+    return `<div class="gasto-item" onclick="openEdit(${g.id})">
+      <div class="gasto-dot cat-${c.cls}">${c.icon}</div>
+      <div class="gasto-info">
+        <div class="gasto-desc">${g.desc}</div>
+        <div class="gasto-meta">
+          <span>${fmtFecha(g.fecha)}</span>
+          <span class="gasto-cat cat-${c.cls}">${c.label}</span>
+        </div>
+      </div>
+      <div class="gasto-right">
+        <div class="gasto-amount">${fmt(g.importe)}</div>
+        <div class="gasto-pago">${g.pago}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addGasto() {
+  const fecha = document.getElementById('nFecha').value;
+  const desc = document.getElementById('nDesc').value.trim();
+  const cat = document.getElementById('nCat').value;
+  const importe = parseFloat(document.getElementById('nImporte').value);
+  const pago = document.getElementById('nPago').value;
+  const notas = document.getElementById('nNotas').value.trim();
+  if(!fecha || !desc || isNaN(importe) || importe <= 0) { toast('Rellena fecha, descripción e importe', false); return; }
+  const id = Date.now();
+  gastos.push({id, fecha, desc, cat, importe, pago, notas});
+  save();
+  document.getElementById('nDesc').value = '';
+  document.getElementById('nImporte').value = '';
+  document.getElementById('nNotas').value = '';
+  toast('✓ Gasto añadido');
+  renderAll();
+  showPanel('lista');
+}
+
+function openEdit(id) {
+  const g = gastos.find(x => x.id === id);
+  if(!g) return;
+  editId = id;
+  document.getElementById('eFecha').value = g.fecha;
+  document.getElementById('eDesc').value = g.desc;
+  document.getElementById('eCat').value = g.cat;
+  document.getElementById('eImporte').value = g.importe;
+  document.getElementById('ePago').value = g.pago;
+  document.getElementById('eNotas').value = g.notas || '';
+  document.getElementById('editOverlay').classList.add('open');
+}
+
+function saveEdit() {
+  const g = gastos.find(x => x.id === editId);
+  if(!g) return;
+  g.fecha = document.getElementById('eFecha').value;
+  g.desc = document.getElementById('eDesc').value.trim();
+  g.cat = document.getElementById('eCat').value;
+  g.importe = parseFloat(document.getElementById('eImporte').value);
+  g.pago = document.getElementById('ePago').value;
+  g.notas = document.getElementById('eNotas').value.trim();
+  save(); closeEdit(); renderAll(); toast('✓ Gasto actualizado');
+}
+
+function deleteGasto() {
+  if(!confirm('¿Eliminar este gasto?')) return;
+  gastos = gastos.filter(x => x.id !== editId);
+  save(); closeEdit(); renderAll(); toast('🗑 Gasto eliminado');
+}
+
+function closeEdit() {
+  document.getElementById('editOverlay').classList.remove('open');
+  editId = null;
+}
+
+document.getElementById('editOverlay').addEventListener('click', function(e) {
+  if(e.target === this) closeEdit();
+});
+
+function showPanel(p) {
+  ['resumen','anadir','lista'].forEach(n => {
+    document.getElementById('panel'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('active', n===p);
+    document.getElementById('nav'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('active', n===p);
+  });
+}
+
+function fmt(n) { return n.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
+function fmtFecha(f) {
+  const d = new Date(f + 'T00:00:00');
+  return d.toLocaleDateString('es-ES', {day:'2-digit', month:'short', year:'numeric'});
+}
+
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (ok ? ' ok' : '');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+load();
+setDefaultDate();
+setPeriod('mes');
+// Mark month button active
+document.querySelectorAll('.period-btn')[1].classList.add('active');
+</script>
+</body>
+</html>
